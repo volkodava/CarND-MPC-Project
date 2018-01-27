@@ -4,6 +4,13 @@
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
 
+// TODO: Set the timestep length and duration
+static const size_t N = 10;
+static const double dt = 0.1;
+// This is the length from front to center of gravity that has a similar radius.
+static const double Lf = 2.67;
+
+
 using namespace std;
 
 class MPC {

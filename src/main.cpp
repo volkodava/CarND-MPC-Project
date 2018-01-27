@@ -87,10 +87,10 @@ int main() {
           // j[1] is the data JSON object
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
-          double px = j[1]["x"];
-          double py = j[1]["y"];
-          double psi = j[1]["psi"];
-          double v = j[1]["speed"];
+          const double px = j[1]["x"];
+          const double py = j[1]["y"];
+          const double psi = j[1]["psi"];
+          const double v = j[1]["speed"];
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -98,8 +98,64 @@ int main() {
           * Both are in between [-1, 1].
           *
           */
-          double steer_value;
-          double throttle_value;
+          // XXX: y coordinate from the simulator is reversed
+          // so psi and delta should be multiplied by -1
+          const double delta = j[1]["steering_angle"];
+          const double a = j[1]["throttle"];
+
+          // convert position coordinates from map to car
+          assert(ptsx.size() == ptsy.size());
+
+          Eigen::VectorXd x_car_vec(ptsx.size());
+          Eigen::VectorXd y_car_vec(ptsy.size());
+
+          for (int i = 0; i < ptsx.size(); i++) {
+            const double xc = ptsx[i] - px;
+            const double yc = ptsy[i] - py;
+            x_car_vec[i] = cos(-psi) * xc - sin(-psi) * yc;
+            y_car_vec[i] = sin(-psi) * xc + cos(-psi) * yc;
+          }
+          
+          // after transformation we have x & y & phi is 0.0
+          const double x_car = 0.0;
+          const double y_car = 0.0;
+          const double psi_car = 0.0;
+
+          // The polynomial is fitted to a curve line so a polynomial with order 3 is sufficient
+          Eigen::VectorXd coeffs = polyfit(x_car_vec, y_car_vec, 3);
+
+          // The cross track error is calculated by evaluating at polynomial at x, f(x)
+          // and subtracting y.
+          const double cte = polyeval(coeffs, x_car) - y_car;
+          
+          // Due to the sign starting at 0, the orientation error is -f'(x).
+          // derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
+          const double epsi = psi - atan(coeffs[1]);
+
+          // x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+          // y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+          // psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+          // v_[t+1] = v[t] + a[t] * dt
+          // cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+          // epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+          const double f = coeffs[0] + coeffs[1] * x_car;
+          const double psides = atan(coeffs[1]);
+
+          const double x_next = x_car + v * cos(psi) * dt;
+          const double y_next = y_car + v * sin(psi) * dt;
+          const double psi_next = psi + (v / Lf) * (-delta) * dt;
+          const double v_next = v + a * dt;
+          const double cte_next = f - y_car + v * sin(epsi) * dt;
+          const double epsi_next = psi - psides + v * ((-delta) / Lf) * dt;
+
+          Eigen::VectorXd state(6);
+          state << x_next, y_next, psi_next, v_next, cte_next, epsi_next;
+
+          vector<double> actuations = mpc.Solve(state, coeffs);
+          // normalize steer value to [-1; 1] before assign it
+          // steer value range is [-25; 25] degrees
+          double steer_value = actuations[0] / deg2rad(25);
+          double throttle_value = actuations[1];
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -114,6 +170,14 @@ int main() {
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
 
+          mpc_x_vals.push_back(x_next);
+          mpc_y_vals.push_back(y_next);
+
+          for (int i = 2; i < actuations.size(); i += 2) {
+            mpc_x_vals.push_back(actuations[i]);
+            mpc_y_vals.push_back(actuations[i + 1]);
+          }
+
           msgJson["mpc_x"] = mpc_x_vals;
           msgJson["mpc_y"] = mpc_y_vals;
 
@@ -123,6 +187,11 @@ int main() {
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
+
+          for(int i = 0; i < x_car_vec.size(); i++) {
+            next_x_vals.push_back(x_car_vec[i]);
+            next_y_vals.push_back(-y_car_vec[i]);
+          }
 
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;
