@@ -130,7 +130,7 @@ int main() {
           
           // Due to the sign starting at 0, the orientation error is -f'(x).
           // derivative of coeffs[0] + coeffs[1] * x -> coeffs[1]
-          const double epsi = psi - atan(coeffs[1]);
+          const double epsi = psi_car - atan(coeffs[1]);
 
           // x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
           // y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
@@ -141,12 +141,12 @@ int main() {
           const double f = coeffs[0] + coeffs[1] * x_car;
           const double psi_des = atan(coeffs[1]);
 
-          const double x_next = x_car + v * cos(psi) * dt;
-          const double y_next = y_car + v * sin(psi) * dt;
-          const double psi_next = psi + (v / Lf) * (-delta) * dt;
+          const double x_next = x_car + v * cos(psi_car) * dt;
+          const double y_next = y_car + v * sin(psi_car) * dt;
+          const double psi_next = psi_car + (v / Lf) * (-delta) * dt;
           const double v_next = v + a * dt;
           const double cte_next = f - y_car + v * sin(epsi) * dt;
-          const double epsi_next = psi - psi_des + v * ((-delta) / Lf) * dt;
+          const double epsi_next = psi_car - psi_des + v * ((-delta) / Lf) * dt;
 
           Eigen::VectorXd state(6);
           state << x_next, y_next, psi_next, v_next, cte_next, epsi_next;
