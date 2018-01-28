@@ -153,7 +153,7 @@ int main() {
           vector<double> actuations = mpc.Solve(state, coeffs);
           // normalize steer value to [-1; 1] before assign it
           // steer value range is [-25; 25] degrees
-          const double steer_value = actuations[0] / deg2rad(25);
+          const double steer_value = actuations[0] / deg2rad(25) / Lf;
           const double throttle_value = actuations[1];
 
           json msgJson;
