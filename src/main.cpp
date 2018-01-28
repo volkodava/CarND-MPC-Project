@@ -137,16 +137,16 @@ int main() {
           // psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
           // v_[t+1] = v[t] + a[t] * dt
           // cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
-          // epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+          // epsi[t+1] = psi[t] - psi_des[t] + v[t] * delta[t] / Lf * dt
           const double f = coeffs[0] + coeffs[1] * x_car;
-          const double psides = atan(coeffs[1]);
+          const double psi_des = atan(coeffs[1]);
 
           const double x_next = x_car + v * cos(psi) * dt;
           const double y_next = y_car + v * sin(psi) * dt;
           const double psi_next = psi + (v / Lf) * (-delta) * dt;
           const double v_next = v + a * dt;
           const double cte_next = f - y_car + v * sin(epsi) * dt;
-          const double epsi_next = psi - psides + v * ((-delta) / Lf) * dt;
+          const double epsi_next = psi - psi_des + v * ((-delta) / Lf) * dt;
 
           Eigen::VectorXd state(6);
           state << x_next, y_next, psi_next, v_next, cte_next, epsi_next;
@@ -154,8 +154,8 @@ int main() {
           vector<double> actuations = mpc.Solve(state, coeffs);
           // normalize steer value to [-1; 1] before assign it
           // steer value range is [-25; 25] degrees
-          double steer_value = actuations[0] / deg2rad(25);
-          double throttle_value = actuations[1];
+          const double steer_value = actuations[0] / deg2rad(25);
+          const double throttle_value = actuations[1];
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
