@@ -138,14 +138,13 @@ int main() {
           // v_[t+1] = v[t] + a[t] * dt
           // cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
           // epsi[t+1] = psi[t] - psi_des[t] + v[t] * delta[t] / Lf * dt
-          const double f = coeffs[0] + coeffs[1] * x_car;
           const double psi_des = atan(coeffs[1]);
 
           const double x_next = x_car + v * cos(psi_car) * dt;
           const double y_next = y_car + v * sin(psi_car) * dt;
           const double psi_next = psi_car + (v / Lf) * (-delta) * dt;
           const double v_next = v + a * dt;
-          const double cte_next = f - y_car + v * sin(epsi) * dt;
+          const double cte_next = cte + v * sin(epsi) * dt;
           const double epsi_next = psi_car - psi_des + v * ((-delta) / Lf) * dt;
 
           Eigen::VectorXd state(6);
@@ -190,7 +189,7 @@ int main() {
 
           for(int i = 0; i < x_car_vec.size(); i++) {
             next_x_vals.push_back(x_car_vec[i]);
-            next_y_vals.push_back(-y_car_vec[i]);
+            next_y_vals.push_back(y_car_vec[i]);
           }
 
           msgJson["next_x"] = next_x_vals;
