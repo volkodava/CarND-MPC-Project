@@ -16,8 +16,8 @@ using CppAD::AD;
 //
 
 // Both the reference cross track and orientation errors are 0.
-// The reference velocity is set to 60 mph.
-static const double ref_v = 60;
+// The reference velocity is set to 100 mph.
+static const double ref_v = 100;
 
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
@@ -48,23 +48,31 @@ class FG_eval {
     // Any additions to the cost should be added to `fg[0]`.
     fg[0] = 0;
 
+    const int cte_weight = 1500;
+    const int epsi_weight = 1500;
+    const int v_weight = 1;
+    const int delta_weight = 1;
+    const int a_weight = 1;
+    const int delta_change_weight = 1;
+    const int a_change_weight = 1;
+
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
-      fg[0] += CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += cte_weight * CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += epsi_weight * CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += v_weight * CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t], 2);
+      fg[0] += delta_weight * CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += a_weight * CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += delta_change_weight * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += a_change_weight * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 
     // Initial constraints
