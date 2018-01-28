@@ -48,31 +48,26 @@ class FG_eval {
     // Any additions to the cost should be added to `fg[0]`.
     fg[0] = 0;
 
-    const int cte_weight = 1500;
-    const int epsi_weight = 1500;
-    const int v_weight = 1;
-    const int delta_weight = 1;
-    const int a_weight = 1;
-    const int delta_change_weight = 1;
-    const int a_change_weight = 1;
+    const int cte_weight = 2000;
+    const int epsi_weight = 2000;
 
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
       fg[0] += cte_weight * CppAD::pow(vars[cte_start + t], 2);
       fg[0] += epsi_weight * CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += v_weight * CppAD::pow(vars[v_start + t] - ref_v, 2);
+      fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += delta_weight * CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += a_weight * CppAD::pow(vars[a_start + t], 2);
+      fg[0] += CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += CppAD::pow(vars[a_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += delta_change_weight * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += a_change_weight * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
     }
 
     // Initial constraints
@@ -267,8 +262,14 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   //
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
   // creates a 2 element double vector.
-  return {solution.x[delta_start], solution.x[a_start],
-          solution.x[x_start + 1], solution.x[y_start + 1],
-          solution.x[psi_start + 1], solution.x[v_start + 1],
-          solution.x[cte_start + 1], solution.x[epsi_start + 1]};
+  vector<double> result_vec = {
+    solution.x[delta_start], solution.x[a_start]
+  };
+
+  for (unsigned int i = 0; i < N; i++) {
+    result_vec.push_back(solution.x[x_start + i]);
+    result_vec.push_back(solution.x[y_start + i]);
+  }
+
+  return result_vec;
 }
