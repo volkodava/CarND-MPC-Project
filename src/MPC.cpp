@@ -48,8 +48,9 @@ class FG_eval {
     // Any additions to the cost should be added to `fg[0]`.
     fg[0] = 0;
 
-    const int cte_weight = 2000;
-    const int epsi_weight = 2000;
+    const int cte_weight = 3000;
+    const int epsi_weight = 3000;
+    const int actuators_weight = 500;
 
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
@@ -60,14 +61,13 @@ class FG_eval {
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t], 2);
+      fg[0] += actuators_weight * CppAD::pow(vars[delta_start + t] * vars[v_start + t], 2);
     }
 
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+      fg[0] += CppAD::pow((vars[delta_start + t + 1] - vars[delta_start + t]) *
+                            (vars[a_start + t + 1] - vars[a_start + t]), 2);
     }
 
     // Initial constraints
