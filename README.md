@@ -5,7 +5,8 @@ Self-Driving Car Engineer Nanodegree Program
 
 ### Project description
 
-The project goal is to build Model Predictive Control (`MPC`) to efficiently drive the car around the track by using steering angle and acceleration value to minimize car distance to the reference trajectory. The project input are car position, speed, heading direction and sequence of waypoints along a reference trajectory `{(x[0], y[0]), ..., (x[k], y[k]), ..., (x[n], y[n])}` in a global coordinate system.
+The project goal is to build Model Predictive Control (`MPC`) to efficiently drive the car around the track (minimize car distance to the reference trajectory, make turns smooth) by using steering angle and acceleration value. 
+The project input are car position, speed, heading direction and sequence of waypoints along a reference trajectory `{(x[0], y[0]), ..., (x[k], y[k]), ..., (x[n], y[n])}` in a global coordinate system.
 
 ### The Model
 
@@ -45,6 +46,10 @@ which further used in kinematic model.
 To deal with latency of 100ms. I have implemented prediction of car state at initial step (in `main.cpp` file) 
 using kinematic model and `dt` value equals to the latency. 
 Then I used this initial state to calculate future predicted states with help of `MPC.Solve()` function.
+
+### Results
+
+Here's a [link to my project video result](./mpc_video.mov)
 
 
 ## Dependencies
