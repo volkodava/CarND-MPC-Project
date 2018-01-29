@@ -9,9 +9,9 @@ The project goal is to build Model Predictive Control (`MPC`) to efficiently dri
 
 ### The Model
 
-The model used in project is kinematic bicycle model, that that ignore tire forces, gravity, and mass. 
+The model used in project is kinematic bicycle model, that ignores tire forces, gravity, and mass. 
 It makes model less accurate but more tractable.
-The model takes changes of heading direction into account and is thus non-linear. The model implemented using next equations:
+The model takes changes of heading direction into account therefore it is non-linear. The model implemented using next equations:
 ```python
 x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
 y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
@@ -27,13 +27,24 @@ As a result of model calculation we have `a` as car acceleration, `delta` as it'
 
 ### Timestep Length and Elapsed Duration (N & dt)
 
-`N = 10` and `dt = 0.1`. These values were taken from the lectures and were proven like a good one by number of experiments.
+`N = 10` and `dt = 0.1`. These values were taken from the lectures and were proven as a good one by number of experiments.
 
 ### Polynomial Fitting and MPC Preprocessing
 
+At first I defined cost function for each input parameter of the model. 
+Cost functions for `cte`, `epsi` and `actuators` defined with weight value to keep car driving near the road center. 
+Steering angle and acceleration (`actuators`) weight defined in relation to each other and make the ride much smoother.
 To perform all computations all position coordinates were converted from the global (map) coordinate system to a car coordinate system. This also 
 simplified calculation of polinomial fit line since in car coordinate system car position `(x;y)` is `[0; 0]` and orientation angle `psi` is `0`.
+Based on car position coordinates we calculate third-degree polynomial fit line. 
+Result of solved third-degree polynomial line are coefficients that used to calculate cross-track (`cte`) and orientation error (`epsi`)
+which further used in kinematic model.
 
+### Model Predictive Control with Latency
+
+To deal with latency of 100ms. I have implemented prediction of car state at initial step (in `main.cpp` file) 
+using kinematic model and `dt` value equals to the latency. 
+Then I used this initial state to calculate future predicted states with help of `MPC.Solve()` function.
 
 
 ## Dependencies
