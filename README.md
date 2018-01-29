@@ -3,6 +3,39 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 
+### Project description
+
+The project goal is to build Model Predictive Control (`MPC`) to efficiently drive the car around the track by using steering angle and acceleration value to minimize car distance to the reference trajectory. The project input are car position, speed, heading direction and sequence of waypoints along a reference trajectory `{(x[0], y[0]), ..., (x[k], y[k]), ..., (x[n], y[n])}` in a global coordinate system.
+
+### The Model
+
+The model used in project is kinematic bicycle model, that that ignore tire forces, gravity, and mass. 
+It makes model less accurate but more tractable.
+The model takes changes of heading direction into account and is thus non-linear. The model implemented using next equations:
+```python
+x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+v_[t+1] = v[t] + a[t] * dt
+cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+epsi[t+1] = psi[t] - psi_des[t] + v[t] * delta[t] / Lf * dt
+```
+Here `x`, `y` are car's position, `psi` is heading direction, `v` velocity, `cte` cross-track error, `epsi` orientation error 
+and `Lf` is the distance between the car center of mass and the front wheels which determines its turning radius
+
+As a result of model calculation we have `a` as car acceleration, `delta` as it's steering angle and prediction of upcoming path it will take.
+
+### Timestep Length and Elapsed Duration (N & dt)
+
+`N = 10` and `dt = 0.1`. These values were taken from the lectures and were proven like a good one by number of experiments.
+
+### Polynomial Fitting and MPC Preprocessing
+
+To perform all computations all position coordinates were converted from the global (map) coordinate system to a car coordinate system. This also 
+simplified calculation of polinomial fit line since in car coordinate system car position `(x;y)` is `[0; 0]` and orientation angle `psi` is `0`.
+
+
+
 ## Dependencies
 
 * cmake >= 3.5
